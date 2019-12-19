@@ -1,0 +1,61 @@
+version: "3.5"
+
+services:
+  redis-cluster:
+    image: grokzen/redis-cluster
+    environment:
+      INITIAL_PORT: 7000
+      MASTERS: 3
+      SLAVES_PER_MASTER: 1
+    networks:
+      mesh:
+        aliases:
+          - redis-cluster
+
+  front-envoy-blue: &envoy_front
+    build:
+      context: ./envoy
+    volumes:
+      - ./envoy/front-envoy-local.yaml:/etc/front-envoy.yaml
+    networks:
+      - mesh
+    ports:
+      - 18001-18010:8001
+      - 28001-28010:9000
+    depends_on:
+      - ap-server-blue
+  front-envoy-green:
+    <<: *envoy_front
+    ports:
+      - 19001-19010:8002
+      - 29001-29010:9000
+    depends_on:
+      - ap-server-green
+
+  ap-server-blue: &ap_server
+    build:
+      context: .
+      target: builder
+    volumes:
+      - ./:/envoy_grpc_sample
+    command: ./docker/app/start.sh
+    environment: &ap_server_env
+      ROLE: local
+      ROOT_PATH: /envoy_grpc_sample
+      TZ: Asia/Tokyo
+      PORT_NUMBER: 30001
+    depends_on:
+      - redis-cluster
+    networks:
+      mesh:
+        aliases:
+          - ap-server
+  ap-server-green:
+    <<: *ap_server
+    environment:
+      <<: *ap_server_env
+      PORT_NUMBER: 30002
+
+
+networks:
+  mesh: {}

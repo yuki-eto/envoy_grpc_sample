@@ -1,0 +1,74 @@
+static_resources:
+  listeners:
+    - address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 8001
+      filter_chains:
+        - filters:
+          - name: &filter_name envoy.http_connection_manager
+            config: &config
+              codec_type: auto
+              stat_prefix: ingress_http
+              access_log:
+                - name: envoy.file_access_log
+                  config:
+                    path: /dev/stdout
+              http_filters:
+                - name: envoy.router
+                  config: {}
+              route_config:
+                name: local_route
+                virtual_hosts:
+                  - &virtual_host
+                    name: backend
+                    domains: ["*"]
+                    routes:
+                      - &route
+                        match: { prefix: "/" }
+                        route: { cluster: grpc_blue, timeout: { seconds: 0 } }
+    - address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 8002
+      filter_chains:
+        - filters:
+            - name: *filter_name
+              config:
+                <<: *config
+                route_config:
+                  name: local_route
+                  virtual_hosts:
+                    - <<: *virtual_host
+                      routes:
+                        - <<: *route
+                          route: { cluster: grpc_green, timeout: { seconds: 0 } }
+  clusters:
+    - &cluster
+      name: grpc_blue
+      connect_timeout: 1.0s
+      type: strict_dns
+      lb_policy: round_robin
+      http2_protocol_options: {}
+      health_checks:
+        - timeout: 1s
+          interval: 5s
+          unhealthy_threshold: 6
+          healthy_threshold: 6
+          tcp_health_check: {}
+      hosts:
+        - socket_address:
+            address: ap-server
+            port_value: 30001
+    - <<: *cluster
+      name: grpc_green
+      hosts:
+        - socket_address:
+            address: ap-server
+            port_value: 30002
+admin:
+  access_log_path: /dev/null
+  address:
+    socket_address:
+      address: 0.0.0.0
+      port_value: 9000

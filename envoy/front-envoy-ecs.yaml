@@ -1,0 +1,102 @@
+admin:
+  access_log_path: /dev/null
+  address:
+    socket_address:
+      address: 0.0.0.0
+      port_value: 9000
+node:
+  cluster: front-envoy
+  id: front-envoy
+static_resources:
+  clusters:
+  - connect_timeout: 1.0s
+    health_checks:
+    - healthy_threshold: 3
+      interval: 10s
+      tcp_health_check: {}
+      timeout: 5s
+      unhealthy_threshold: 3
+    hosts:
+    - socket_address:
+        address: blue.grpc-server
+        port_value: 30001
+    http2_protocol_options: {}
+    lb_policy: round_robin
+    name: grpc_blue
+    type: strict_dns
+  - connect_timeout: 1.0s
+    health_checks:
+    - healthy_threshold: 3
+      interval: 10s
+      tcp_health_check: {}
+      timeout: 5s
+      unhealthy_threshold: 3
+    hosts:
+    - socket_address:
+        address: green.grpc-server
+        port_value: 30001
+    http2_protocol_options: {}
+    lb_policy: round_robin
+    name: grpc_green
+    type: strict_dns
+  listeners:
+  - address:
+      socket_address:
+        address: 0.0.0.0
+        port_value: 8001
+    filter_chains:
+    - filters:
+      - config:
+          access_log:
+          - config:
+              path: /dev/stdout
+            name: envoy.file_access_log
+          codec_type: auto
+          http_filters:
+          - config: {}
+            name: envoy.router
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - domains:
+              - '*'
+              name: backend
+              routes:
+              - match:
+                  prefix: /
+                route:
+                  cluster: grpc_blue
+                  timeout:
+                    seconds: 0
+          stat_prefix: ingress_http
+        name: envoy.http_connection_manager
+  - address:
+      socket_address:
+        address: 0.0.0.0
+        port_value: 8002
+    filter_chains:
+    - filters:
+      - config:
+          access_log:
+          - config:
+              path: /dev/stdout
+            name: envoy.file_access_log
+          codec_type: auto
+          http_filters:
+          - config: {}
+            name: envoy.router
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - domains:
+              - '*'
+              name: backend
+              routes:
+              - match:
+                  prefix: /
+                route:
+                  cluster: grpc_green
+                  timeout:
+                    seconds: 0
+          stat_prefix: ingress_http
+        name: envoy.http_connection_manager

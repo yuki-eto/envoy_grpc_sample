@@ -1,0 +1,28 @@
+settings:
+  legacy:
+    force: true
+    interval: 500ms
+schema:
+  - name: envoy_grpc_sample
+    path: .
+    commands:
+      install:
+        status: true
+        method: go build -race -o /tmp/hot_reloaded_app ./server/main.go
+      run:
+        status: true
+        method: /tmp/hot_reloaded_app
+    watcher:
+      extensions:
+        - go
+      paths:
+        - /
+      ignored_paths:
+        - .git
+        - .realize
+        - tmp
+        - client
+      scripts:
+        - type: before
+          command: ./docker/app/kill.sh
+          output: true
