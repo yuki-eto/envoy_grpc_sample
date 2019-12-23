@@ -16,7 +16,7 @@ services:
     build:
       context: ./envoy
     volumes:
-      - ./envoy/front-envoy-local.yaml:/etc/front-envoy.yaml
+      - ./envoy/front-envoy-local.yaml:/etc/envoy/envoy.yaml
     networks:
       - mesh
     ports:

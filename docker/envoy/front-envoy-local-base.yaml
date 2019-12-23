@@ -53,8 +53,8 @@ static_resources:
       health_checks:
         - timeout: 1s
           interval: 5s
-          unhealthy_threshold: 6
-          healthy_threshold: 6
+          unhealthy_threshold: 3
+          healthy_threshold: 3
           tcp_health_check: {}
       hosts:
         - socket_address:

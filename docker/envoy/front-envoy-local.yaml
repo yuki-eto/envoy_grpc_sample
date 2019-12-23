@@ -8,11 +8,11 @@ static_resources:
   clusters:
   - connect_timeout: 1.0s
     health_checks:
-    - healthy_threshold: 6
+    - healthy_threshold: 3
       interval: 5s
       tcp_health_check: {}
       timeout: 1s
-      unhealthy_threshold: 6
+      unhealthy_threshold: 3
     hosts:
     - socket_address:
         address: ap-server
@@ -23,11 +23,11 @@ static_resources:
     type: strict_dns
   - connect_timeout: 1.0s
     health_checks:
-    - healthy_threshold: 6
+    - healthy_threshold: 3
       interval: 5s
       tcp_health_check: {}
       timeout: 1s
-      unhealthy_threshold: 6
+      unhealthy_threshold: 3
     hosts:
     - socket_address:
         address: ap-server

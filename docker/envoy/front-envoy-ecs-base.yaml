@@ -52,7 +52,7 @@ static_resources:
       http2_protocol_options: {}
       health_checks:
         - timeout: 5s
-          interval: 10s
+          interval: 5s
           unhealthy_threshold: 3
           healthy_threshold: 3
           tcp_health_check: {}

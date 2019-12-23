@@ -16,6 +16,6 @@ eval ${DOCKER_LOGIN}
 cd $(dirname $0)
 build_image ${APP_IMAGE_NAME}
 
-cd ./envoy
+cd ./docker/envoy
 build_image ${ENVOY_IMAGE_NAME}
 
