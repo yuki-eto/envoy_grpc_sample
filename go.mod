@@ -3,6 +3,7 @@ module envoy_grpc_sample
 go 1.13
 
 require (
+	github.com/envoyproxy/go-control-plane v0.9.1 // indirect
 	github.com/go-redis/redis/v7 v7.0.0-beta.4
 	github.com/golang/protobuf v1.3.2
 	github.com/google/uuid v1.1.1

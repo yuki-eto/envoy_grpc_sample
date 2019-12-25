@@ -4,6 +4,16 @@ admin:
     socket_address:
       address: 0.0.0.0
       port_value: 9000
+dynamic_resources:
+  lds_config:
+    api_config_source:
+      api_type: GRPC
+      grpc_services:
+        envoy_grpc:
+          cluster_name: xds_cluster
+node:
+  cluster: front-envoy
+  id: node1
 static_resources:
   clusters:
   - connect_timeout: 1.0s
@@ -36,64 +46,17 @@ static_resources:
     lb_policy: round_robin
     name: grpc_green
     type: strict_dns
-  listeners:
-  - address:
-      socket_address:
-        address: 0.0.0.0
-        port_value: 8001
-    filter_chains:
-    - filters:
-      - config:
-          access_log:
-          - config:
-              path: /dev/stdout
-            name: envoy.file_access_log
-          codec_type: auto
-          http_filters:
-          - config: {}
-            name: envoy.router
-          route_config:
-            name: local_route
-            virtual_hosts:
-            - domains:
-              - '*'
-              name: backend
-              routes:
-              - match:
-                  prefix: /
-                route:
-                  cluster: grpc_blue
-                  timeout:
-                    seconds: 0
-          stat_prefix: ingress_http
-        name: envoy.http_connection_manager
-  - address:
-      socket_address:
-        address: 0.0.0.0
-        port_value: 8002
-    filter_chains:
-    - filters:
-      - config:
-          access_log:
-          - config:
-              path: /dev/stdout
-            name: envoy.file_access_log
-          codec_type: auto
-          http_filters:
-          - config: {}
-            name: envoy.router
-          route_config:
-            name: local_route
-            virtual_hosts:
-            - domains:
-              - '*'
-              name: backend
-              routes:
-              - match:
-                  prefix: /
-                route:
-                  cluster: grpc_green
-                  timeout:
-                    seconds: 0
-          stat_prefix: ingress_http
-        name: envoy.http_connection_manager
+  - connect_timeout: 0.5s
+    http2_protocol_options: {}
+    lb_policy: round_robin
+    load_assignment:
+      cluster_name: xds_cluster
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: xds-server
+                port_value: 30000
+    name: xds_cluster
+    type: strict_dns

@@ -12,17 +12,26 @@ services:
         aliases:
           - redis-cluster
 
+  xds-server:
+    build:
+      context: ./docker/xds_server
+    networks:
+      mesh:
+        aliases:
+          - xds-server
+
   front-envoy-blue: &envoy_front
     build:
-      context: ./envoy
+      context: ./docker/envoy
     volumes:
-      - ./envoy/front-envoy-local.yaml:/etc/envoy/envoy.yaml
+      - ./docker/envoy/front-envoy-local.yaml:/etc/envoy/envoy.yaml
     networks:
       - mesh
     ports:
       - 18001-18010:8001
       - 28001-28010:9000
     depends_on:
+      - xds-server
       - ap-server-blue
   front-envoy-green:
     <<: *envoy_front
@@ -55,7 +64,6 @@ services:
     environment:
       <<: *ap_server_env
       PORT_NUMBER: 30002
-
 
 networks:
   mesh: {}
