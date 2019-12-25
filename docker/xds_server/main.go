@@ -54,6 +54,7 @@ func httpConnectionManagerConfig(lType string) *any.Any {
 			Name:       "envoy.file_access_log",
 			ConfigType: &filterAccessLog.AccessLog_TypedConfig{TypedConfig: accessLogTypedConf},
 		}},
+		UseRemoteAddress: &wrappers.BoolValue{Value: true},
 		HttpFilters: []*manager.HttpFilter{{
 			Name: "envoy.router",
 		}},
