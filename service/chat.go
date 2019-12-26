@@ -5,13 +5,14 @@ import (
 	"envoy_grpc_sample/grpc"
 	"log"
 	"os"
-	"sync"
 
+	"github.com/cornelk/hashmap"
 	"github.com/go-redis/redis/v7"
 	"github.com/golang/protobuf/proto"
 )
 
 const psChannel = "broadcast"
+const mapSize = 100000
 
 type ChatImpl struct {
 	redis    redis.UniversalClient
@@ -20,17 +21,19 @@ type ChatImpl struct {
 }
 
 type userMap struct {
-	m *sync.Map
+	m *hashmap.HashMap
 }
 
 func NewUserMap() *userMap {
-	return &userMap{m: &sync.Map{}}
+	return &userMap{
+		m: hashmap.New(mapSize),
+	}
 }
 func (m *userMap) Set(u *User) {
-	m.m.Store(u.UUID, u)
+	m.m.Set(u.UUID, u)
 }
 func (m *userMap) Get(uuid string) *User {
-	u, ok := m.m.Load(uuid)
+	u, ok := m.m.Get(uuid)
 	if !ok {
 		return nil
 	}
@@ -41,19 +44,24 @@ func (m *userMap) Del(uuid string) bool {
 	if u == nil {
 		return false
 	}
-	m.m.Delete(uuid)
+	m.m.Del(uuid)
 	u.deletedCh <- true
 	return true
 }
 func (m *userMap) Broadcast(msg *grpc.ChatStream) {
-	m.m.Range(func(key, value interface{}) bool {
-		v := value.(*User)
+	iter := m.m.Iter()
+	for {
+		kv, ok := <-iter
+		if !ok {
+			break
+		}
+		key, val := kv.Key, kv.Value
+		v := val.(*User)
 		if err := v.server.Send(msg); err != nil {
 			log.Printf("send err: %+v", err)
-			m.m.Delete(key)
+			m.m.Del(key)
 		}
-		return true
-	})
+	}
 }
 
 func NewRedisCluster() redis.UniversalClient {

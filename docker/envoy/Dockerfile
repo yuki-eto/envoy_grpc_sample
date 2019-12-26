@@ -1,5 +1,6 @@
 FROM envoyproxy/envoy:latest
 
-COPY ./front-envoy-ecs.yaml /etc/envoy/envoy.yaml
+COPY ./start_envoy.sh .
+COPY ./conf/*.yaml /etc/envoy/
 EXPOSE 8001 8002 9000
-CMD ["envoy", "-c", "/etc/envoy/envoy.yaml"]
+CMD ./start_envoy.sh $ENVOY_ENV

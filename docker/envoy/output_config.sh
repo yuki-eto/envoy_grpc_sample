@@ -2,5 +2,5 @@
 
 cd $(dirname $0)
 
-yae ./front-envoy-local-base.yaml > ./front-envoy-local.yaml
-yae ./front-envoy-ecs-base.yaml > ./front-envoy-ecs.yaml
+yae ./front-envoy-local-base.yaml > ./conf/front-envoy-local.yaml
+yae ./front-envoy-ecs-base.yaml > ./conf/front-envoy-ecs.yaml

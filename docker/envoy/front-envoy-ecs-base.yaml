@@ -13,6 +13,18 @@ static_resources:
               access_log:
                 - name: envoy.file_access_log
                   config:
+                    json_format:
+                      protocol: "%PROTOCOL%"
+                      duration: "%DURATION%"
+                      start_time: "%START_TIME%"
+                      bytes_received: "%BYTES_RECEIVED%"
+                      response_code: "%RESPONSE_CODE%"
+                      bytes_sent: "%BYTES_SENT%"
+                      response_flags: "%RESPONSE_FLAGS%"
+                      route_name: "%ROUTE_NAME%"
+                      upstream_host: "%UPSTREAM_HOST%"
+                      upstream_transport_failure_reason: "%UPSTREAM_TRANSPORT_FAILURE_REASON%"
+                      downstream_remote_address: "%DOWNSTREAM_REMOTE_ADDRESS%"
                     path: /dev/stdout
               http_filters:
                 - name: envoy.router

@@ -14,9 +14,11 @@ services:
 
   front-envoy-blue: &envoy_front
     build:
-      context: ./envoy
+      context: ./docker/envoy
     volumes:
-      - ./envoy/front-envoy-local.yaml:/etc/envoy/envoy.yaml
+      - ./docker/envoy/conf:/etc/envoy
+    environment:
+      ENVOY_ENV: local
     networks:
       - mesh
     ports:
