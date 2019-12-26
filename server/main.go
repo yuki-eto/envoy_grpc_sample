@@ -40,5 +40,5 @@ func main() {
 	log.Print("wait for interrupt...")
 	<-sig
 
-	server.Stop()
+	server.GracefulStop()
 }
