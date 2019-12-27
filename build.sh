@@ -11,11 +11,11 @@ function build_image() {
 }
 
 DOCKER_LOGIN=$(aws ecr get-login --no-include-email --region ap-northeast-1)
-eval ${DOCKER_LOGIN}
+eval "${DOCKER_LOGIN}"
 
 cd $(dirname $0)
-build_image ${APP_IMAGE_NAME}
+build_image $APP_IMAGE_NAME
 
 cd ./docker/envoy
-build_image ${ENVOY_IMAGE_NAME}
+build_image $ENVOY_IMAGE_NAME
 
