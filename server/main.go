@@ -1,7 +1,7 @@
 package main
 
 import (
-	appGrpc "envoy_grpc_sample/grpc"
+	"envoy_grpc_sample/pb"
 	"envoy_grpc_sample/service"
 	"fmt"
 	"log"
@@ -25,7 +25,7 @@ func main() {
 
 	server := grpc.NewServer()
 	s := service.NewChat()
-	appGrpc.RegisterChatServer(server, s)
+	pb.RegisterChatServer(server, s)
 
 	log.Printf("running server on port: %s", port)
 	go func() {

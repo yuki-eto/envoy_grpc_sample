@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	appGrpc "envoy_grpc_sample/grpc"
+	"envoy_grpc_sample/pb"
 	"flag"
 	"fmt"
 	"io"
@@ -40,7 +40,7 @@ func main() {
 	}
 	defer conn.Close()
 
-	client := appGrpc.NewChatClient(conn)
+	client := pb.NewChatClient(conn)
 
 	ctx := context.TODO()
 	uid := uuid.New().String()
@@ -48,7 +48,7 @@ func main() {
 	wg := &sync.WaitGroup{}
 
 	{
-		req := &appGrpc.JoinRequest{
+		req := &pb.JoinRequest{
 			Uuid: uid,
 			Name: name,
 		}
@@ -78,7 +78,7 @@ func main() {
 
 	log.Print("wait for speak")
 	wg.Wait()
-	ticker := time.NewTicker(25 * time.Millisecond)
+	ticker := time.NewTicker(100 * time.Millisecond)
 	go func() {
 		for {
 			select {
@@ -86,7 +86,7 @@ func main() {
 				if !ok {
 					return
 				}
-				req := &appGrpc.SpeakRequest{
+				req := &pb.SpeakRequest{
 					Uuid: uid,
 					Msg:  time.Now().String(),
 				}
@@ -102,7 +102,7 @@ func main() {
 
 	<-sig
 	{
-		req := &appGrpc.LeaveRequest{
+		req := &pb.LeaveRequest{
 			Uuid: uid,
 		}
 		if _, err := client.Leave(ctx, req); err != nil {

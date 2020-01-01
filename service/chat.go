@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"envoy_grpc_sample/grpc"
+	"envoy_grpc_sample/pb"
 	"log"
 	"os"
 
@@ -16,7 +16,7 @@ const mapSize = 100000
 
 type ChatImpl struct {
 	redis    redis.UniversalClient
-	streamCh chan *grpc.ChatStream
+	streamCh chan *pb.ChatStream
 	users    *userMap
 }
 
@@ -48,7 +48,7 @@ func (m *userMap) Del(uuid string) bool {
 	u.deletedCh <- true
 	return true
 }
-func (m *userMap) Broadcast(msg *grpc.ChatStream) {
+func (m *userMap) Broadcast(msg *pb.ChatStream) {
 	iter := m.m.Iter()
 	for {
 		kv, ok := <-iter
@@ -109,16 +109,16 @@ func (s *ChatImpl) Subscribe() {
 	log.Printf("[%s] start subscription", hostname)
 
 	for msg := range ps.Channel() {
-		stream := &grpc.ChatStream{}
+		stream := &pb.ChatStream{}
 		if err := proto.Unmarshal([]byte(msg.Payload), stream); err != nil {
 			log.Printf("unmarshal err: %+v", err)
 			continue
 		}
 
 		switch stream.Type {
-		case grpc.ChatStream_JOINED, grpc.ChatStream_LEAVED, grpc.ChatStream_SPOKE:
+		case pb.ChatStream_JOINED, pb.ChatStream_LEAVED, pb.ChatStream_SPOKE:
 			s.users.Broadcast(stream)
-		case grpc.ChatStream_LEAVE, grpc.ChatStream_SPEAK:
+		case pb.ChatStream_LEAVE, pb.ChatStream_SPEAK:
 			next := s.next(stream)
 			if next != nil {
 				if err := s.publish(next); err != nil {
@@ -131,44 +131,44 @@ func (s *ChatImpl) Subscribe() {
 	log.Printf("[%s] end subscription", hostname)
 }
 
-func (s *ChatImpl) next(stream *grpc.ChatStream) *grpc.ChatStream {
+func (s *ChatImpl) next(stream *pb.ChatStream) *pb.ChatStream {
 	switch stream.Type {
-	case grpc.ChatStream_LEAVE:
+	case pb.ChatStream_LEAVE:
 		return s.leave(stream.Uuid)
-	case grpc.ChatStream_SPEAK:
+	case pb.ChatStream_SPEAK:
 		return s.speak(stream.Uuid, stream.Msg)
 	}
 	return nil
 }
 
-func (s *ChatImpl) leave(uuid string) *grpc.ChatStream {
+func (s *ChatImpl) leave(uuid string) *pb.ChatStream {
 	u := s.users.Get(uuid)
 	if u == nil {
 		return nil
 	}
 	u.deletedCh <- true
 	s.users.Del(uuid)
-	return &grpc.ChatStream{
-		Type: grpc.ChatStream_LEAVED,
+	return &pb.ChatStream{
+		Type: pb.ChatStream_LEAVED,
 		Uuid: uuid,
 		Name: u.Name,
 	}
 }
 
-func (s *ChatImpl) speak(uuid, msg string) *grpc.ChatStream {
+func (s *ChatImpl) speak(uuid, msg string) *pb.ChatStream {
 	u := s.users.Get(uuid)
 	if u == nil {
 		return nil
 	}
-	return &grpc.ChatStream{
-		Type: grpc.ChatStream_SPOKE,
+	return &pb.ChatStream{
+		Type: pb.ChatStream_SPOKE,
 		Uuid: uuid,
 		Name: u.Name,
 		Msg:  msg,
 	}
 }
 
-func (s *ChatImpl) publish(stream *grpc.ChatStream) error {
+func (s *ChatImpl) publish(stream *pb.ChatStream) error {
 	b, err := proto.Marshal(stream)
 	if err != nil {
 		return err
@@ -183,21 +183,23 @@ func (s *ChatImpl) publish(stream *grpc.ChatStream) error {
 type User struct {
 	UUID      string
 	Name      string
-	server    grpc.Chat_JoinServer
+	server    pb.Chat_JoinServer
 	deletedCh chan bool
 }
 
-func (s *ChatImpl) Join(req *grpc.JoinRequest, server grpc.Chat_JoinServer) error {
+func (s *ChatImpl) Join(req *pb.JoinRequest, server pb.Chat_JoinServer) error {
+	uuid := req.Uuid
+	name := req.Name
 	user := &User{
-		UUID:      req.Uuid,
-		Name:      req.Name,
+		UUID:      uuid,
+		Name:      name,
 		server:    server,
 		deletedCh: make(chan bool, 1),
 	}
 	s.users.Set(user)
 
-	if err := s.publish(&grpc.ChatStream{
-		Type: grpc.ChatStream_JOINED,
+	if err := s.publish(&pb.ChatStream{
+		Type: pb.ChatStream_JOINED,
 		Uuid: user.UUID,
 		Name: user.Name,
 	}); err != nil {
@@ -208,27 +210,27 @@ func (s *ChatImpl) Join(req *grpc.JoinRequest, server grpc.Chat_JoinServer) erro
 	return nil
 }
 
-func (s *ChatImpl) Leave(ctx context.Context, req *grpc.LeaveRequest) (*grpc.CommonResponse, error) {
-	stream := &grpc.ChatStream{
-		Type: grpc.ChatStream_LEAVE,
+func (s *ChatImpl) Leave(ctx context.Context, req *pb.LeaveRequest) (*pb.CommonResponse, error) {
+	stream := &pb.ChatStream{
+		Type: pb.ChatStream_LEAVE,
 		Uuid: req.Uuid,
 	}
 	if err := s.publish(stream); err != nil {
 		return nil, err
 	}
-	return &grpc.CommonResponse{Result: true}, nil
+	return &pb.CommonResponse{Result: true}, nil
 }
 
-func (s *ChatImpl) Speak(ctx context.Context, req *grpc.SpeakRequest) (*grpc.CommonResponse, error) {
-	stream := &grpc.ChatStream{
-		Type: grpc.ChatStream_SPEAK,
+func (s *ChatImpl) Speak(ctx context.Context, req *pb.SpeakRequest) (*pb.CommonResponse, error) {
+	stream := &pb.ChatStream{
+		Type: pb.ChatStream_SPEAK,
 		Uuid: req.Uuid,
 		Msg:  req.Msg,
 	}
 	if err := s.publish(stream); err != nil {
 		return nil, err
 	}
-	return &grpc.CommonResponse{Result: true}, nil
+	return &pb.CommonResponse{Result: true}, nil
 }
 
 var hostname string
