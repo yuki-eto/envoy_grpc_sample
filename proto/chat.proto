@@ -3,39 +3,40 @@ syntax = "proto3";
 package pb;
 
 message JoinRequest {
-    string uuid = 1;
-    string name = 2;
+  string uuid = 1;
+  string name = 2;
 }
 
 message LeaveRequest {
-    string uuid = 1;
+  string uuid = 1;
 }
 
 message SpeakRequest {
-    string uuid = 1;
-    string msg = 2;
+  string uuid = 1;
+  string msg = 2;
 }
 
 message CommonResponse {
-    bool result = 1;
+  bool result = 1;
 }
 
 message ChatStream {
-    enum StreamType {
-        JOINED = 0;
-        LEAVE  = 1;
-        LEAVED = 2;
-        SPEAK  = 3;
-        SPOKE  = 4;
-    }
-    StreamType type = 1;
-    string uuid = 2;
-    string name = 3;
-    string msg = 4;
+  enum StreamType {
+    UNSPECIFIED = 0;
+    JOINED = 1;
+    LEAVE = 2;
+    LEAVED = 3;
+    SPEAK = 4;
+    SPOKE = 5;
+  }
+  StreamType type = 1;
+  string uuid = 2;
+  string name = 3;
+  string msg = 4;
 }
 
 service Chat {
-    rpc Join(JoinRequest) returns (stream ChatStream) {}
-    rpc Leave(LeaveRequest) returns (CommonResponse) {}
-    rpc Speak(SpeakRequest) returns (CommonResponse) {}
+  rpc Join (JoinRequest) returns (stream ChatStream) {}
+  rpc Leave (LeaveRequest) returns (CommonResponse) {}
+  rpc Speak (SpeakRequest) returns (CommonResponse) {}
 }
