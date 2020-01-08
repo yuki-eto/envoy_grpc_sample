@@ -48,7 +48,7 @@ services:
   ap-server-blue: &ap_server
     build:
       context: .
-      target: builder
+      target: develop
     volumes:
       - ./:/envoy_grpc_sample
     command: ./docker/app/start.sh
@@ -57,8 +57,10 @@ services:
       ROOT_PATH: /envoy_grpc_sample
       TZ: Asia/Tokyo
       PORT_NUMBER: 30001
+      GOPROXY: "http://goproxy:8009"
     depends_on:
       - redis-cluster
+      - goproxy
     networks:
       mesh:
         aliases:
@@ -68,6 +70,17 @@ services:
     environment:
       <<: *ap_server_env
       PORT_NUMBER: 30002
+
+  # go module proxy for access private repository
+  goproxy:
+    image: knocknote/goproxy
+    ports:
+      - 8009:8009
+    entrypoint: /goproxy -cacheDir=/go -basicAuthToken=${BASIC_AUTH_TOKEN} -listen=0.0.0.0:8009
+    networks:
+      mesh:
+        aliases:
+          - goproxy
 
 networks:
   mesh: {}

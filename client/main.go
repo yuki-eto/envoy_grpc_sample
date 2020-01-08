@@ -4,7 +4,6 @@ import (
 	"context"
 	"envoy_grpc_sample/pb"
 	"flag"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -20,21 +19,18 @@ import (
 func main() {
 	var (
 		name string
-		host string
-		port uint
+		addr string
 	)
 	flag.StringVar(&name, "name", "", "name")
-	flag.StringVar(&host, "host", "", "host")
-	flag.UintVar(&port, "port", 0, "port")
+	flag.StringVar(&addr, "addr", "", "addr")
 	flag.Parse()
 
-	if name == "" || host == "" || port == 0 {
+	if name == "" || addr == "" {
 		flag.Usage()
 		return
 	}
 
-	target := fmt.Sprintf("%s:%d", host, port)
-	conn, err := grpc.Dial(target, grpc.WithInsecure())
+	conn, err := grpc.Dial(addr, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("%+v", err)
 	}
